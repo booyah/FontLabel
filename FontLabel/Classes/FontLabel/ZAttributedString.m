@@ -455,11 +455,12 @@
 		}
 		lastRun = run;
 	}
-	
-	if (((ZAttributeRun *)[_attributes lastObject]).index < NSMaxRange(range)) {
+
+	lastRun = [_attributes lastObject];
+	if (lastRun.index < NSMaxRange(range)) {
 		NSRange subrange = NSMakeRange(first, [_attributes count] - first);
 		if (NSMaxRange(range) < [_buffer length]) {
-			ZAttributeRun *newRun = [[ZAttributeRun alloc] initWithIndex:NSMaxRange(range) attributes:[[_attributes lastObject] attributes]];
+			ZAttributeRun *newRun = [[ZAttributeRun alloc] initWithIndex:NSMaxRange(range) attributes:lastRun.attributes];
 			[_attributes addObject:newRun];
 			[newRun release];
 		}
@@ -482,8 +483,8 @@
 		}
 		if ([[_attributes objectAtIndex:firstAfter] index] > NSMaxRange(range)) {
 			// the first after is too far after, insert another run!
-			ZAttributeRun *newRun = [[ZAttributeRun alloc] initWithIndex:NSMaxRange(range)
-															  attributes:[[_attributes objectAtIndex:firstAfter-1] attributes]];
+			ZAttributeRun *nextRun = [_attributes objectAtIndex:firstAfter-1];
+			ZAttributeRun *newRun = [[ZAttributeRun alloc] initWithIndex:NSMaxRange(range) attributes:nextRun.attributes];
 			[_attributes insertObject:newRun atIndex:firstAfter];
 			[newRun release];
 		}
