@@ -1,0 +1,10 @@
+.DS_Store
+.svn/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+xcuserdata/
+*.xcuserdatad/
+build/
+DerivedData/

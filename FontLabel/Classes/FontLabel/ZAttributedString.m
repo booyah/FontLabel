@@ -291,7 +291,7 @@
 			NSUInteger endRunIndex = runIndex+1;
 			runIndex--;
 			// search backwards
-			while (runIndex >= 0) {
+			while (runIndex < NSNotFound) {
 				if (run.index <= rangeLimit.location) {
 					break;
 				}
