@@ -38,6 +38,11 @@
 	   lineBreakMode:(UILineBreakMode)lineBreakMode alignment:(UITextAlignment)alignment __AVAILABILITY_INTERNAL_DEPRECATED;
 
 // ZFont-based methods
+
+// Set default CGTextDrawingMode for drawing ZFonts
++ (CGTextDrawingMode)zFontTextDrawingMode;
++ (void)setZFontTextDrawingMode:(CGTextDrawingMode)drawingMode;
+
 - (CGSize)sizeWithZFont:(ZFont *)font;
 - (CGSize)sizeWithZFont:(ZFont *)font constrainedToSize:(CGSize)size;
 - (CGSize)sizeWithZFont:(ZFont *)font constrainedToSize:(CGSize)size lineBreakMode:(UILineBreakMode)lineBreakMode;
@@ -45,12 +50,18 @@
 		  numberOfLines:(NSUInteger)numberOfLines;
 - (CGSize)drawAtPoint:(CGPoint)point withZFont:(ZFont *)font;
 - (CGSize)drawAtPoint:(CGPoint)point forWidth:(CGFloat)width withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode;
+- (CGSize)drawAtPoint:(CGPoint)point forWidth:(CGFloat)width withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode drawingMode:(CGTextDrawingMode)drawingMode;
 - (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font;
 - (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode;
+- (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode drawingMode:(CGTextDrawingMode)drawingMode;
 - (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode
 		   alignment:(UITextAlignment)alignment;
 - (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode
+		   alignment:(UITextAlignment)alignment drawingMode:(CGTextDrawingMode)drawingMode;
+- (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode
 		   alignment:(UITextAlignment)alignment numberOfLines:(NSUInteger)numberOfLines;
+- (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode
+		   alignment:(UITextAlignment)alignment numberOfLines:(NSUInteger)numberOfLines drawingMode:(CGTextDrawingMode)drawingMode;
 @end
 
 @interface ZAttributedString (ZAttributedStringDrawing)
@@ -61,9 +72,14 @@
 				  numberOfLines:(NSUInteger)numberOfLines;
 - (CGSize)drawAtPoint:(CGPoint)point;
 - (CGSize)drawAtPoint:(CGPoint)point forWidth:(CGFloat)width lineBreakMode:(UILineBreakMode)lineBreakMode;
+- (CGSize)drawAtPoint:(CGPoint)point forWidth:(CGFloat)width lineBreakMode:(UILineBreakMode)lineBreakMode drawingMode:(CGTextDrawingMode)drawingMode;
 - (CGSize)drawInRect:(CGRect)rect;
 - (CGSize)drawInRect:(CGRect)rect withLineBreakMode:(UILineBreakMode)lineBreakMode;
+- (CGSize)drawInRect:(CGRect)rect withLineBreakMode:(UILineBreakMode)lineBreakMode drawingMode:(CGTextDrawingMode)drawingMode;
 - (CGSize)drawInRect:(CGRect)rect withLineBreakMode:(UILineBreakMode)lineBreakMode alignment:(UITextAlignment)alignment;
+- (CGSize)drawInRect:(CGRect)rect withLineBreakMode:(UILineBreakMode)lineBreakMode alignment:(UITextAlignment)alignment  drawingMode:(CGTextDrawingMode)drawingMode;
 - (CGSize)drawInRect:(CGRect)rect withLineBreakMode:(UILineBreakMode)lineBreakMode alignment:(UITextAlignment)alignment
 	   numberOfLines:(NSUInteger)numberOfLines;
+- (CGSize)drawInRect:(CGRect)rect withLineBreakMode:(UILineBreakMode)lineBreakMode alignment:(UITextAlignment)alignment
+	   numberOfLines:(NSUInteger)numberOfLines drawingMode:(CGTextDrawingMode)drawingMode;
 @end
