@@ -69,6 +69,8 @@ typedef struct fontTable {
 static FontTableFormat supportedFormats[] = { kFontTableFormat4, kFontTableFormat12 };
 static size_t supportedFormatsCount = sizeof(supportedFormats) / sizeof(FontTableFormat);
 
+static NSCharacterSet *zFontCharacterSet = nil;
+
 static fontTable *newFontTable(CFDataRef cmapTable, FontTableFormat format) {
 	fontTable *table = (struct fontTable *)malloc(sizeof(struct fontTable));
 	table->retainCount = 1;
@@ -454,8 +456,8 @@ static CGSize drawOrSizeTextConstrainedToSize(BOOL performDraw, NSString *string
 	} while (0)
 	
 	READ_GLYPHS();
-	
-	NSCharacterSet *alphaCharset = [NSCharacterSet alphanumericCharacterSet];
+		
+	NSCharacterSet *alphaCharset = zFontCharacterSet;
 	
 	// scan left-to-right looking for newlines or until we hit the width constraint
 	// When we hit a wrapping point, calculate truncation as follows:
@@ -731,7 +733,7 @@ static NSArray *attributeRunForFont(ZFont *font) {
 }
 
 static CGSize drawTextInRect(CGRect rect, NSString *text, NSArray *attributes, UILineBreakMode lineBreakMode,
-							 UITextAlignment alignment, NSUInteger numberOfLines, BOOL ignoreColor) {
+							 UITextAlignment alignment, NSUInteger numberOfLines, CGTextDrawingMode drawingMode, BOOL ignoreColor) {
 	CGContextRef ctx = UIGraphicsGetCurrentContext();
 	
 	CGContextSaveGState(ctx);
@@ -742,7 +744,7 @@ static CGSize drawTextInRect(CGRect rect, NSString *text, NSArray *attributes, U
 	
 	CGContextTranslateCTM(ctx, rect.origin.x, rect.origin.y);
 	
-	CGContextSetTextDrawingMode(ctx, kCGTextFill);
+	CGContextSetTextDrawingMode(ctx, drawingMode);
 	CGSize size = drawOrSizeTextConstrainedToSize(YES, text, attributes, rect.size, numberOfLines, lineBreakMode, alignment, ignoreColor);
 	
 	CGContextRestoreGState(ctx);
@@ -750,7 +752,38 @@ static CGSize drawTextInRect(CGRect rect, NSString *text, NSArray *attributes, U
 	return size;
 }
 
+static CGTextDrawingMode zFontTextDrawingMode = kCGTextFill;
+
 @implementation NSString (FontLabelStringDrawing)
+
++ (CGTextDrawingMode)zFontTextDrawingMode;
+{
+	return zFontTextDrawingMode;
+}
+
++ (void)setZFontTextDrawingMode:(CGTextDrawingMode)drawingMode;
+{
+	zFontTextDrawingMode = drawingMode;
+}
+
++ (NSCharacterSet *)zFontCharacterSet
+{
+	if ( zFontCharacterSet == nil )
+	{
+		[self setZFontCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
+	}
+	return zFontCharacterSet;
+}
+
++ (void)setZFontCharacterSet:(NSCharacterSet *)charSet
+{
+	if ( zFontCharacterSet != charSet )
+	{
+		[zFontCharacterSet release];
+		zFontCharacterSet = [charSet retain];
+	}
+}
+
 // CGFontRef-based methods
 - (CGSize)sizeWithCGFont:(CGFontRef)font pointSize:(CGFloat)pointSize {
 	return [self sizeWithZFont:[ZFont fontWithCGFont:font size:pointSize]];
@@ -820,7 +853,11 @@ static CGSize drawTextInRect(CGRect rect, NSString *text, NSArray *attributes, U
 }
 
 - (CGSize)drawAtPoint:(CGPoint)point forWidth:(CGFloat)width withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode {
-	return drawTextInRect((CGRect){ point, { width, CGFLOAT_MAX } }, self, attributeRunForFont(font), lineBreakMode, UITextAlignmentLeft, 1, YES);
+	return [self drawAtPoint:point forWidth:width withZFont:font lineBreakMode:lineBreakMode drawingMode:zFontTextDrawingMode];
+}
+
+- (CGSize)drawAtPoint:(CGPoint)point forWidth:(CGFloat)width withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode drawingMode:(CGTextDrawingMode)drawingMode {
+	return drawTextInRect((CGRect){ point, { width, CGFLOAT_MAX } }, self, attributeRunForFont(font), lineBreakMode, UITextAlignmentLeft, 1, drawingMode, YES);
 }
 
 - (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font {
@@ -828,17 +865,31 @@ static CGSize drawTextInRect(CGRect rect, NSString *text, NSArray *attributes, U
 }
 
 - (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode {
-	return [self drawInRect:rect withZFont:font lineBreakMode:lineBreakMode alignment:UITextAlignmentLeft];
+	return [self drawInRect:rect withZFont:font lineBreakMode:lineBreakMode drawingMode:zFontTextDrawingMode];
+}
+
+- (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode drawingMode:(CGTextDrawingMode)drawingMode {
+	return [self drawInRect:rect withZFont:font lineBreakMode:lineBreakMode alignment:UITextAlignmentLeft drawingMode:drawingMode];
 }
 
 - (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode
 		   alignment:(UITextAlignment)alignment {
-	return drawTextInRect(rect, self, attributeRunForFont(font), lineBreakMode, alignment, 0, YES);
+	return [self drawInRect:rect withZFont:font lineBreakMode:lineBreakMode alignment:alignment drawingMode:zFontTextDrawingMode];
+}
+
+- (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode
+		   alignment:(UITextAlignment)alignment drawingMode:(CGTextDrawingMode)drawingMode {
+	return drawTextInRect(rect, self, attributeRunForFont(font), lineBreakMode, alignment, 0, drawingMode, YES);
 }
 
 - (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode
 		   alignment:(UITextAlignment)alignment numberOfLines:(NSUInteger)numberOfLines {
-	return drawTextInRect(rect, self, attributeRunForFont(font), lineBreakMode, alignment, numberOfLines, YES);
+	return [self drawInRect:rect withZFont:font lineBreakMode:lineBreakMode alignment:alignment numberOfLines:numberOfLines drawingMode:zFontTextDrawingMode];
+}
+
+- (CGSize)drawInRect:(CGRect)rect withZFont:(ZFont *)font lineBreakMode:(UILineBreakMode)lineBreakMode
+		   alignment:(UITextAlignment)alignment numberOfLines:(NSUInteger)numberOfLines drawingMode:(CGTextDrawingMode)drawingMode{
+	return drawTextInRect(rect, self, attributeRunForFont(font), lineBreakMode, alignment, numberOfLines, drawingMode, YES);
 }
 @end
 
@@ -869,7 +920,12 @@ static CGSize drawTextInRect(CGRect rect, NSString *text, NSArray *attributes, U
 }
 
 - (CGSize)drawAtPoint:(CGPoint)point forWidth:(CGFloat)width lineBreakMode:(UILineBreakMode)lineBreakMode {
-	return drawTextInRect((CGRect){ point, { width, CGFLOAT_MAX } }, self.string, self.attributes, lineBreakMode, UITextAlignmentLeft, 1, NO);
+	return [self drawAtPoint:point forWidth:width lineBreakMode:lineBreakMode drawingMode:zFontTextDrawingMode];
+}
+
+- (CGSize)drawAtPoint:(CGPoint)point forWidth:(CGFloat)width lineBreakMode:(UILineBreakMode)lineBreakMode drawingMode:(CGTextDrawingMode)drawingMode
+{
+	return drawTextInRect((CGRect){ point, { width, CGFLOAT_MAX } }, self.string, self.attributes, lineBreakMode, UITextAlignmentLeft, 1, drawingMode, NO);
 }
 
 - (CGSize)drawInRect:(CGRect)rect {
@@ -880,13 +936,25 @@ static CGSize drawTextInRect(CGRect rect, NSString *text, NSArray *attributes, U
 	return [self drawInRect:rect withLineBreakMode:lineBreakMode alignment:UITextAlignmentLeft];
 }
 
+- (CGSize)drawInRect:(CGRect)rect withLineBreakMode:(UILineBreakMode)lineBreakMode drawingMode:(CGTextDrawingMode)drawingMode{
+	return [self drawInRect:rect withLineBreakMode:lineBreakMode alignment:UITextAlignmentLeft drawingMode:drawingMode];
+}
+
 - (CGSize)drawInRect:(CGRect)rect withLineBreakMode:(UILineBreakMode)lineBreakMode alignment:(UITextAlignment)alignment {
-	return drawTextInRect(rect, self.string, self.attributes, lineBreakMode, alignment, 0, NO);
+	return [self drawInRect:rect withLineBreakMode:lineBreakMode alignment:alignment drawingMode:zFontTextDrawingMode];
+}
+
+- (CGSize)drawInRect:(CGRect)rect withLineBreakMode:(UILineBreakMode)lineBreakMode alignment:(UITextAlignment)alignment  drawingMode:(CGTextDrawingMode)drawingMode {
+	return drawTextInRect(rect, self.string, self.attributes, lineBreakMode, alignment, 0, drawingMode, NO);
 }
 
 - (CGSize)drawInRect:(CGRect)rect withLineBreakMode:(UILineBreakMode)lineBreakMode alignment:(UITextAlignment)alignment
 	   numberOfLines:(NSUInteger)numberOfLines {
-	return drawTextInRect(rect, self.string, self.attributes, lineBreakMode, alignment, numberOfLines, NO);
+	return [self drawInRect:rect withLineBreakMode:lineBreakMode alignment:alignment numberOfLines:numberOfLines drawingMode:zFontTextDrawingMode];
+}
+- (CGSize)drawInRect:(CGRect)rect withLineBreakMode:(UILineBreakMode)lineBreakMode alignment:(UITextAlignment)alignment
+	   numberOfLines:(NSUInteger)numberOfLines drawingMode:(CGTextDrawingMode)drawingMode {
+	return drawTextInRect(rect, self.string, self.attributes, lineBreakMode, alignment, numberOfLines, drawingMode, NO);
 }
 @end
 
