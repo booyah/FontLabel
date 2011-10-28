@@ -43,6 +43,10 @@
 + (CGTextDrawingMode)zFontTextDrawingMode;
 + (void)setZFontTextDrawingMode:(CGTextDrawingMode)drawingMode;
 
+// Set default NSCharacterSet for drawing ZFonts
++ (NSCharacterSet *)zFontCharacterSet;
++ (void)setZFontCharacterSet:(NSCharacterSet *)charSet;
+
 - (CGSize)sizeWithZFont:(ZFont *)font;
 - (CGSize)sizeWithZFont:(ZFont *)font constrainedToSize:(CGSize)size;
 - (CGSize)sizeWithZFont:(ZFont *)font constrainedToSize:(CGSize)size lineBreakMode:(UILineBreakMode)lineBreakMode;

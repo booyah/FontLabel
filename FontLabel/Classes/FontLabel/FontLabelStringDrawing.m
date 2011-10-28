@@ -69,6 +69,8 @@ typedef struct fontTable {
 static FontTableFormat supportedFormats[] = { kFontTableFormat4, kFontTableFormat12 };
 static size_t supportedFormatsCount = sizeof(supportedFormats) / sizeof(FontTableFormat);
 
+static NSCharacterSet *zFontCharacterSet = nil;
+
 static fontTable *newFontTable(CFDataRef cmapTable, FontTableFormat format) {
 	fontTable *table = (struct fontTable *)malloc(sizeof(struct fontTable));
 	table->retainCount = 1;
@@ -454,8 +456,8 @@ static CGSize drawOrSizeTextConstrainedToSize(BOOL performDraw, NSString *string
 	} while (0)
 	
 	READ_GLYPHS();
-	
-	NSCharacterSet *alphaCharset = [NSCharacterSet alphanumericCharacterSet];
+		
+	NSCharacterSet *alphaCharset = zFontCharacterSet;
 	
 	// scan left-to-right looking for newlines or until we hit the width constraint
 	// When we hit a wrapping point, calculate truncation as follows:
@@ -762,6 +764,24 @@ static CGTextDrawingMode zFontTextDrawingMode = kCGTextFill;
 + (void)setZFontTextDrawingMode:(CGTextDrawingMode)drawingMode;
 {
 	zFontTextDrawingMode = drawingMode;
+}
+
++ (NSCharacterSet *)zFontCharacterSet
+{
+	if ( zFontCharacterSet == nil )
+	{
+		[self setZFontCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
+	}
+	return zFontCharacterSet;
+}
+
++ (void)setZFontCharacterSet:(NSCharacterSet *)charSet
+{
+	if ( zFontCharacterSet != charSet )
+	{
+		[zFontCharacterSet release];
+		zFontCharacterSet = [charSet retain];
+	}
 }
 
 // CGFontRef-based methods
